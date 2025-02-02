@@ -1,41 +1,25 @@
 package com.example.coap_client.Controller;
 
+
+import com.example.coap_client.DTO.LedStatusDTO;
 import com.example.coap_client.Entity.LedStatus;
-import com.example.coap_client.Repository.LedStatusRepository;
-import org.eclipse.californium.core.CoapResource;
-import org.eclipse.californium.core.coap.CoAP;
-import org.eclipse.californium.core.server.resources.CoapExchange;
+import com.example.coap_client.service.LedStatusService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.*;
 
-@Component
-public class LedStatusController extends CoapResource {
-
+@RestController
+@RequestMapping("/api/led-status")
+public class LedStatusController {
     @Autowired
-    private LedStatusRepository ledStatusRepository;
+    private LedStatusService ledStatusService;
 
-    public LedStatusController() {
-        super("led-status"); // Resource name
+    @GetMapping
+    public LedStatus getLedStatus() {
+        return ledStatusService.getLedStatus();
     }
 
-    @Override
-    public void handleGET(CoapExchange exchange) {
-        // Fetch the latest LED status from the database
-        LedStatus latestStatus = ledStatusRepository.findTopByOrderByTimestampDesc();
-
-        if (latestStatus != null) {
-            // Convert the LED status to JSON
-            String jsonResponse = String.format(
-                    "{\"redLed\": %b, \"yellowLed\": %b, \"greenLed\": %b}",
-                    latestStatus.isRedLed(),
-                    latestStatus.isYellowLed(),
-                    latestStatus.isGreenLed()
-            );
-
-            // Send the response
-            exchange.respond(CoAP.ResponseCode.CONTENT, jsonResponse);
-        } else {
-            exchange.respond(CoAP.ResponseCode.NOT_FOUND, "No LED status found");
-        }
+    @PostMapping
+    public LedStatus updateLedStatus(@RequestBody LedStatusDTO ledStatusDTO) {
+        return ledStatusService.updateLedStatus(ledStatusDTO);
     }
 }

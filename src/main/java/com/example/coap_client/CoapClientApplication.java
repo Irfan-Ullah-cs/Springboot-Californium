@@ -1,6 +1,6 @@
 package com.example.coap_client;
 
-import com.example.coap_client.Controller.LedStatusController;
+import com.example.coap_client.Controller.LedStatusControllerCoAP;
 import jakarta.annotation.PostConstruct;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.config.CoapConfig;
@@ -8,7 +8,6 @@ import org.eclipse.californium.elements.config.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.scheduling.annotation.Scheduled;
 
 
 import java.util.concurrent.TimeUnit;
@@ -17,7 +16,9 @@ import java.util.concurrent.TimeUnit;
 public class CoapClientApplication {
 
 	@Autowired
-	private LedStatusController ledStatusController;
+	private LedStatusControllerCoAP ledStatusController;
+    @Autowired
+    private LedStatusControllerCoAP ledStatusControllerCoAP;
 
 	public static void main(String[] args) {
 		SpringApplication.run(CoapClientApplication.class, args);
@@ -37,7 +38,7 @@ public class CoapClientApplication {
 		CoapServer coapServer = new CoapServer(config);
 
 		// Add the LED status resource
-		coapServer.add(ledStatusController);
+		coapServer.add(ledStatusControllerCoAP);
 
 		// Start the CoAP server
 		coapServer.start();

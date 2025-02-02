@@ -26,7 +26,7 @@ public class CoapClientService {
     /**
      * Sends a CoAP GET request to the specified URI, processes the response, and saves it to the database.
      */
-    @Scheduled(fixedRate = 5000) // Run every 5 seconds
+    @Scheduled(fixedRate = 20000) // Run every 5 seconds
     public void sendCoapRequest() {
         try {
             // Hardcoded CoAP server URI
