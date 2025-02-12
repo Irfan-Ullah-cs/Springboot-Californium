@@ -3,6 +3,7 @@ package com.example.coap_client.service;
 import com.example.coap_client.Entity.SensorData;
 import com.example.coap_client.Repository.SensorDataRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.config.CoapConfig;
@@ -12,13 +13,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
 @Service
 @EnableScheduling
 public class CoapClientService {
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private SensorDataRepository sensorDataRepository;
@@ -26,11 +26,11 @@ public class CoapClientService {
     /**
      * Sends a CoAP GET request to the specified URI, processes the response, and saves it to the database.
      */
-    @Scheduled(fixedRate = 20000) // Run every 5 seconds
+    @Scheduled(fixedRate = 20000) // Run every 20 seconds
     public void sendCoapRequest() {
         try {
             // Hardcoded CoAP server URI
-            String uri = "coap://192.168.152.226/sensors";
+            String uri = "coap://192.168.4.226/sensors";
 
             // Initialize the configuration programmatically
             Configuration config = new Configuration();
@@ -47,11 +47,15 @@ public class CoapClientService {
             // Handle the response
             if (response != null) {
                 if (response.isSuccess()) {
-                    String jsonResponse = response.getResponseText();
-                    System.out.println("Received CoAP response: " + jsonResponse);
+                    // Get the raw CBOR payload
+                    byte[] cborPayload = response.getPayload();
 
-                    // Parse the JSON response into a SensorData object
-                    SensorData sensorData = objectMapper.readValue(jsonResponse, SensorData.class);
+                    // Print the raw CBOR response in base64 format (for readability)
+                    String base64Payload = Base64.getEncoder().encodeToString(cborPayload);
+                    System.out.println("Raw CBOR Response (Base64): " + base64Payload);
+
+                    // Decode the CBOR payload into a SensorData object
+                    SensorData sensorData = decodeCborPayload(cborPayload);
 
                     // Save the SensorData object to the database
                     sensorDataRepository.save(sensorData);
@@ -66,5 +70,20 @@ public class CoapClientService {
             System.err.println("Error while sending CoAP request: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Decodes the CBOR payload into a SensorData object.
+     *
+     * @param cborPayload The raw CBOR payload.
+     * @return A SensorData object.
+     * @throws Exception If decoding fails.
+     */
+    private SensorData decodeCborPayload(byte[] cborPayload) throws Exception {
+        // Create an ObjectMapper with CBORFactory
+        ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
+
+        // Decode the CBOR payload into a SensorData object
+        return cborMapper.readValue(cborPayload, SensorData.class);
     }
 }
